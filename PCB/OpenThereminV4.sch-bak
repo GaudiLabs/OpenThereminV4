@@ -1060,8 +1060,6 @@ Wire Wire Line
 Wire Wire Line
 	6000 2850 5900 2850
 Wire Wire Line
-	5900 2850 5900 1850
-Wire Wire Line
 	3650 5250 3750 5250
 Wire Wire Line
 	3750 5250 3750 4000
@@ -1833,21 +1831,10 @@ L OpenThereminV4-rescue:CONN_01X01 P8
 U 1 1 57DA0948
 P 5800 6450
 F 0 "P8" H 5719 6225 50  0000 C CNN
-F 1 "CONN_01X01" H 6100 6450 50  0000 C CNN
-F 2 "GaudiLabsFootPrints:SMD_Pinheader_1_OT" H 5800 6450 50  0001 C CNN
+F 1 "VCC" H 6100 6450 50  0000 C CNN
+F 2 "GaudiLabsFootPrints:SMD_Pinheader_1_OT_BLANK" H 5800 6450 50  0001 C CNN
 F 3 "" H 5800 6450 50  0000 C CNN
 	1    5800 6450
-	-1   0    0    1   
-$EndComp
-$Comp
-L OpenThereminV4-rescue:CONN_01X01 P7
-U 1 1 57DA0A6C
-P 5800 6350
-F 0 "P7" H 5719 6125 50  0000 C CNN
-F 1 "BUT_PAD" H 6100 6350 50  0000 C CNN
-F 2 "GaudiLabsFootPrints:PAD_SMD_3mm" H 5800 6350 50  0001 C CNN
-F 3 "" H 5800 6350 50  0000 C CNN
-	1    5800 6350
 	-1   0    0    1   
 $EndComp
 $Comp
@@ -1872,10 +1859,6 @@ F 3 "" H 6050 6600 50  0000 C CNN
 	1    6050 6600
 	1    0    0    -1  
 $EndComp
-Text GLabel 6100 6350 2    60   Input ~ 0
-BUT
-Wire Wire Line
-	6000 6350 6100 6350
 Wire Wire Line
 	6050 6450 6000 6450
 Wire Wire Line
@@ -1892,7 +1875,7 @@ U 1 1 57DB2880
 P 5900 7600
 F 0 "W1" V 5800 7650 50  0000 C CNN
 F 1 "FIDUCIAL1" V 5900 8000 50  0000 C CNN
-F 2 "Fiducials:Fiducial_1mm_Dia_2.54mm_Outer_CopperTop" H 6100 7600 50  0001 C CNN
+F 2 "GaudiLabsFootPrints:Fiducial_1mm_Dia_2.54mm_Outer_CopperBottom" H 6100 7600 50  0001 C CNN
 F 3 "" H 6100 7600 50  0000 C CNN
 	1    5900 7600
 	0    -1   -1   0   
@@ -1903,37 +1886,11 @@ U 1 1 57DB3B8D
 P 6100 7600
 F 0 "W2" V 6200 7650 50  0000 L CNN
 F 1 "FIDUCIAL2" V 6100 7900 50  0000 L CNN
-F 2 "Fiducials:Fiducial_1mm_Dia_2.54mm_Outer_CopperTop" H 6300 7600 50  0001 C CNN
+F 2 "GaudiLabsFootPrints:Fiducial_1mm_Dia_2.54mm_Outer_CopperBottom" H 6300 7600 50  0001 C CNN
 F 3 "" H 6300 7600 50  0000 C CNN
 	1    6100 7600
 	0    1    1    0   
 $EndComp
-$Comp
-L OpenThereminV4-rescue:TEST_1P W3
-U 1 1 57DD73B6
-P 5950 1850
-F 0 "W3" V 5904 2037 50  0000 L CNN
-F 1 "TP1" V 5995 2037 50  0000 L CNN
-F 2 "Measurement_Points:Measurement_Point_Round-SMD-Pad_Small" H 6150 1850 50  0001 C CNN
-F 3 "" H 6150 1850 50  0000 C CNN
-	1    5950 1850
-	0    1    1    0   
-$EndComp
-Wire Wire Line
-	5950 1850 5900 1850
-Connection ~ 5900 1850
-$Comp
-L OpenThereminV4-rescue:TEST_1P W4
-U 1 1 57DD87AC
-P 6000 5050
-F 0 "W4" V 5954 5237 50  0000 L CNN
-F 1 "TP2" V 6045 5237 50  0000 L CNN
-F 2 "Measurement_Points:Measurement_Point_Round-SMD-Pad_Small" H 6200 5050 50  0001 C CNN
-F 3 "" H 6200 5050 50  0000 C CNN
-	1    6000 5050
-	0    1    1    0   
-$EndComp
-Connection ~ 6000 4550
 Wire Wire Line
 	2550 1100 2750 1100
 Wire Wire Line
@@ -2038,10 +1995,6 @@ Wire Wire Line
 	2550 2000 2550 2050
 Wire Wire Line
 	2550 2400 2550 2550
-Wire Wire Line
-	5900 1850 5900 1200
-Wire Wire Line
-	6000 4550 6000 5050
 Text Notes 5100 10500 0    60   ~ 0
 PITCH
 Text Notes 5600 10500 0    60   ~ 0
@@ -3060,8 +3013,8 @@ L OpenThereminV4-rescue:CONN_01X01 P9
 U 1 1 57DA044D
 P 5800 6550
 F 0 "P9" H 5719 6325 50  0000 C CNN
-F 1 "CONN_01X01" H 6100 6550 50  0000 C CNN
-F 2 "GaudiLabsFootPrints:SMD_Pinheader_1_OT" H 5800 6550 50  0001 C CNN
+F 1 "GND" H 6100 6550 50  0000 C CNN
+F 2 "GaudiLabsFootPrints:SMD_Pinheader_1_OT_BLANK" H 5800 6550 50  0001 C CNN
 F 3 "" H 5800 6550 50  0000 C CNN
 	1    5800 6550
 	-1   0    0    1   
@@ -3124,4 +3077,21 @@ Wire Wire Line
 	10200 3900 10850 3900
 Wire Wire Line
 	10850 3900 10850 3750
+Wire Wire Line
+	5900 1200 5900 2850
+$Comp
+L OpenThereminV4-rescue:CONN_01X01 P?
+U 1 1 6065CC3D
+P 6550 6050
+F 0 "P?" H 6469 5825 50  0000 C CNN
+F 1 "VCC" H 6850 6050 50  0000 C CNN
+F 2 "GaudiLabsFootPrints:SMD_Pinheader_1_OT_BLANK" H 6550 6050 50  0001 C CNN
+F 3 "" H 6550 6050 50  0000 C CNN
+	1    6550 6050
+	-1   0    0    1   
+$EndComp
+Text GLabel 7100 6050 2    60   Input ~ 0
+RXD
+Wire Wire Line
+	7100 6050 6750 6050
 $EndSCHEMATC
