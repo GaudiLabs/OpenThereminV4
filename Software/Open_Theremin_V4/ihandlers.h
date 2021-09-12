@@ -3,7 +3,9 @@
 
 extern volatile uint16_t pitch;              // Pitch value
 extern volatile uint16_t vol;                // Volume value
-extern volatile uint16_t  vScaledVolume;      // Volume byte
+extern volatile uint16_t vScaledVolume;      // Volume byte
+extern volatile uint16_t pitchCV;              // Pitch CV value
+extern volatile uint16_t volCV;                // Volume CV value
 
 extern volatile uint16_t pitch_counter;      // Pitch counter
 extern volatile uint16_t pitch_counter_l;    // Last value of pitch counter
@@ -16,6 +18,8 @@ extern volatile uint16_t timer_overflow_counter;         // counter for frequenc
 
 extern volatile bool volumeValueAvailable;   // Volume read flag
 extern volatile bool pitchValueAvailable;    // Pitch read flag
+extern volatile bool volumeCVAvailable;   // Volume CV flag
+extern volatile bool pitchCVAvailable;    // Pitch CV flag
 extern volatile bool reenableInt1;    // Pitch read flag
 
 extern volatile uint8_t  vWavetableSelector;
