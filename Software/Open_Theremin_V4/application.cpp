@@ -154,7 +154,7 @@ AppMode Application::nextMode()
 void Application::loop()
 {
   int32_t pitch_v = 0, pitch_l = 0; // Last value of pitch  (for filtering)
-  int32_t vol_v = 0, vol_l = 0;     // Last value of volume (for filtering)
+  int32_t vol_v = 0, vol_l = 0;    // Last value of volume (for filtering and for tracking)
 
   uint16_t volumePotValue = 0;
   uint16_t pitchPotValue = 0;
@@ -163,7 +163,7 @@ void Application::loop()
   uint8_t registerValue = 2;
   uint16_t tmpVolume;
   int16_t tmpPitch;
-  uint8_t tmpOct;
+  uint16_t tmpOct;
   uint16_t tmpLog;
 
 mloop: // Main loop avoiding the GCC "optimization"
@@ -256,7 +256,7 @@ mloop: // Main loop avoiding the GCC "optimization"
 
   if (pitchValueAvailable)
   { // If capture event
-
+    pitch_p = pitch;
     pitch_v = pitch; // Averaging pitch values
     pitch_v = pitch_l + ((pitch_v - pitch_l) >> 2);
     pitch_l = pitch_v;
@@ -273,19 +273,25 @@ mloop: // Main loop avoiding the GCC "optimization"
         tmpPitch = min(tmpPitch, 16383);  // Unaudible upper limit just to prevent DAC overflow
         tmpPitch = max(tmpPitch, 0);      // Silence behing zero beat
         setWavetableSampleAdvance(tmpPitch >> registerValue);
+        if (tmpPitch != pitch_p)
+        { // output new pitch CV value only if pitch value changed (saves runtime resources)
+          pitch_p = tmpPitch;
 #if CV_LOG
-        tmpOct = 0;
-        while (tmpPitch > 1023) {
-          tmpOct += 1;
-          tmpPitch >>= 1;
-        }
-        tmpPitch = max(tmpPitch, 512) - 512;
-        tmpLog = ((uint16_t)tmpPitch >> 3) * 819 >> 6;
-        pitchCV = max(tmpOct * 820 + tmpLog - 48, 0);  // ~1V/Oct for Moog & Roland
+          tmpOct = 0;
+          while (tmpPitch > 1023) {
+            tmpOct += 819;
+            tmpPitch >>= 1;
+          }
+          tmpPitch -= 512;
+          tmpPitch = max(tmpPitch, 0);
+          tmpLog = (((uint32_t)tmpPitch * 819) >> 9);
+          pitchCV = (tmpOct + tmpLog) - 48;
+          pitchCV = max(pitchCV, 0);        // 1V/Oct for Moog & Roland
 #else
-        pitchCV = tmpPitch >> 2;                       // ~800Hz/V for Korg & Yamaha
+          pitchCV = tmpPitch >> 2;                       // 819Hz/V for Korg & Yamaha
 #endif
-        pitchCVAvailable = true;
+          pitchCVAvailable = true;
+        }
         break;
     };
 
@@ -294,8 +300,9 @@ mloop: // Main loop avoiding the GCC "optimization"
     pitchValueAvailable = false;
   }
 
-  if (volumeValueAvailable)
-  {
+  if (volumeValueAvailable && (vol != vol_p))
+  { // If capture event AND volume value changed (saves runtime resources)
+    vol_p = vol;
     vol = max(vol, 5000);
 
     vol_v = vol; // Averaging volume values
@@ -323,6 +330,27 @@ mloop: // Main loop avoiding the GCC "optimization"
 
     // Give vScaledVolume a pseudo-exponential characteristic:
     vScaledVolume = tmpVolume * (tmpVolume + 2);
+
+    tmpVolume = tmpVolume >> 1;
+
+    if (!gate_p && (tmpVolume >= GATE_ON))
+    {
+      gate_p = true;
+      // pull the gate up to sense, first (to prevent short-circuiting the IO pin:
+      GATE_PULLUP;
+      if (GATE_SENSE)
+      { // if it goes up, drive the gate full high:
+        GATE_DRIVE_HIGH;
+      }
+    }
+    else if (gate_p && (tmpVolume <= GATE_OFF))
+    {
+      gate_p = false;
+      // drive the gate low:
+      GATE_DRIVE_LOW;
+    }
+
+
 
     volumeValueAvailable = false;
   }

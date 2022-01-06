@@ -53,7 +53,7 @@ volatile uint16_t vol_counter = 0;
 volatile uint16_t vol_counter_i = 0; // Volume counter
 volatile uint16_t vol_counter_l;     // Last value of volume counter
 
-volatile uint16_t pitchCV;              // Pitch CV value
+volatile int16_t pitchCV;              // Pitch CV value
 volatile uint16_t volCV;                // Volume CV value
 volatile bool volumeCVAvailable;   // Volume CV flag
 volatile bool pitchCVAvailable;    // Pitch CV flag
