@@ -14,6 +14,6 @@
 #define GATE_ON  20 // That's the level which will drive the Gate high when volume increases from lower
 #define GATE_OFF 16 // That's the level which will drive the Gate low when volume decreases from higher
 // Making both values equal risk the gate signal to bounce, leave at least 4 (hysteresis) between both.
-
+// Set both to 128 to disable the Gate Signal.
 
 #endif // _BUILD_H
