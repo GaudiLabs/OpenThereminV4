@@ -8,6 +8,7 @@
 
 
 // calibration
+#define DAC_12BIT_MAX 4095         // 12 bit DAC max clamping value
 #define PITCH_FIXED_OSCILLATOR_FREQUENCY        500000      // XTAL1 = 16 MHz / 32 (Q5 of U2 - 4060D)
 #define VOLUME_FIXED_OSCILLATOR_FREQUENCY       460800      // XTAL2 = 7.3728 MHz / 16 (Q4 of U3 - 4060D)
 #define CALIBRATION_BASE_MAX_DRIFT              150         // maximum drift from target frequency for success calibration
@@ -16,14 +17,32 @@ int32_t pitchCalibrationBase = 0;
 const int16_t PitchFreqOffset = 700;
 int32_t volCalibrationBase = 0;
 const int16_t VolumeFreqOffset = 700;
-const uint32_t master_clock_frequency = 16000000;
-
-#define DAC_12BIT_MAX 4095         // 12 bit DAC max clamping value
+static float qMeasurement = 0;
 
 
 /*******************************************
  *          CALIBRATION ROUTINES
  *******************************************/
+
+unsigned long GetQMeasurement() {
+  int qn = 0;
+  TCCR1B = (1 << CS10);
+  while (!(PIND & (1 << PORTD3)));
+  while ((PIND & (1 << PORTD3)));
+  TCNT1 = 0;
+  timer_overflow_counter = 0;
+  while (qn < 31250) {
+    while (!(PIND & (1 << PORTD3)));
+    qn++;
+    while ((PIND & (1 << PORTD3)));
+  }
+  TCCR1B = 0;
+  unsigned long frequency = TCNT1;
+  unsigned long temp = 65536 * (unsigned long)timer_overflow_counter;
+  frequency += temp;
+  return frequency;
+}
+
 
  
 /**
@@ -173,8 +192,8 @@ bool calibration_finalize() {
             #endif
 
             // check if calibration was within valid limits
-            float pitchBeatHz = master_clock_frequency / pitchCalibrationBase;
-            float volBeatHz = master_clock_frequency / volCalibrationBase;
+            float pitchBeatHz = qMeasurement / pitchCalibrationBase;
+            float volBeatHz = qMeasurement / volCalibrationBase;
             success = abs(pitchBeatHz - PitchFreqOffset) < CALIBRATION_BASE_MAX_DRIFT;
             if (success) {
                 success = abs(volBeatHz - VolumeFreqOffset) < CALIBRATION_BASE_MAX_DRIFT;
@@ -218,20 +237,31 @@ bool calibration_finalize() {
  * @see GetPitchMeasurement()
  */
 bool calibrate_pitch() {
-    int16_t pitchXn0 = 0;    // Lower DAC bound
-    int16_t pitchXn1 = DAC_12BIT_MAX;    // Upper DAC bound (max for 12-bit DAC)
-    int16_t pitchXn2 = 0;    // Midpoint in iteration
-    static const float q0 = (master_clock_frequency / master_clock_frequency * PITCH_FIXED_OSCILLATOR_FREQUENCY); // Count Timer1 ticks over 31.25k cycles
-    long pitchfn0 = 0;       // Measured pitch frequencies
+    int16_t pitchXn0 = 0;
+    int16_t pitchXn1 = DAC_12BIT_MAX;
+    int16_t pitchXn2 = 0;
+    float q0 = 0.f;
+    long pitchfn0 = 0;
     long pitchfn1 = 0;
-    long pitchfn = q0 - PitchFreqOffset;     // Correct for calibration drift
+    long pitchfn = 0;
 
     DEBUG_PRINTLN(F("\nPITCH CALIBRATION"));
     DEBUG_PRINT(F("Set f= ")); DEBUG_PRINTLN(pitchfn);
 
+    // UI FEEDBACK
+    HW_LED_BLUE_ON;
+    HW_LED_RED_ON;
+
     ihInitialisePitchMeasurement();     // Setup Timer1 and associated ISR flags
-    //sei();
+    sei();
     SPImcpDACinit();                    // Initialize DACs
+
+    qMeasurement = GetQMeasurement(); // Measure Arduino clock frequency
+    DEBUG_PRINT(F("X1="));DEBUG_PRINTLN(qMeasurement);
+    q0 = (16000000 / qMeasurement * PITCH_FIXED_OSCILLATOR_FREQUENCY); //Calculated set frequency based on Arudino clock frequency
+
+    pitchfn = q0 - PitchFreqOffset; // Add offset calue to set frequency
+    DEBUG_PRINT(F("Pitch Set frequency: "));DEBUG_PRINTLN(pitchfn);
 
     SPImcpDAC2Bsend(1600);          // bias the volume oscillator for pitch calibration
     SPImcpDAC2Asend(pitchXn0);      // Frequency at low DAC value
@@ -320,19 +350,22 @@ bool calibrate_volume() {
     int16_t volumeXn0 = 0;   // Lower DAC bound
     int16_t volumeXn1 = DAC_12BIT_MAX;   // Upper DAC bound
     int16_t volumeXn2 = 0;   // Next DAC trial value
-    // Calculate actual frequency from X2 crystal via prior master_clock_frequency (from X1 at 16 MHz)
-    // Target frequency: 7372800 / 16 = 460800
-    static const float q0 = (master_clock_frequency / master_clock_frequency * VOLUME_FIXED_OSCILLATOR_FREQUENCY);            // Calculated oscillator frequency based on crystal measurement
+
     int32_t volumefn0 = 0;      // Frequency measurements
     int32_t volumefn1 = 0;
-    int32_t volumefn = q0 - VolumeFreqOffset;
 
     DEBUG_PRINTLN(F("\nVOLUME CALIBRATION"));
-    DEBUG_PRINT("Vf="); DEBUG_PRINTLN(volumefn);
 
     ihInitialiseVolumeMeasurement();    // Configure Timer0 and related registers
-    //sei();
+    sei();
     SPImcpDACinit();                    // Re-initialize DAC interface
+
+    // Target frequency: 7372800 / 16 = 460800
+    float q0 = (16000000  / qMeasurement  * VOLUME_FIXED_OSCILLATOR_FREQUENCY);            // Calculated oscillator frequency based on crystal measurement
+    int32_t volumefn = q0 - VolumeFreqOffset;
+    DEBUG_PRINT(F("Vf=")); DEBUG_PRINTLN(volumefn);
+
+    DEBUG_PRINT(F("Volume Set Frequency: "));DEBUG_PRINTLN(volumefn);
 
     // Measure low and high frequency extremes for DAC sweep range
     SPImcpDAC2Bsend(volumeXn0);
@@ -368,6 +401,9 @@ bool calibrate_volume() {
     if (success) {
         EEPROM.put(EEPROM_VOLUME_DAC_VOLTAGE_ADDRESS, volumeXn0); // Store DAC value for volume oscillator compensation
     }
+
+    HW_LED_BLUE_ON;
+    HW_LED_RED_OFF;
     return success;
 }
 
@@ -385,6 +421,9 @@ bool calibration_start() {
     millitimer(100);
     if (success) {
         success = calibration_finalize();
+        DEBUG_PRINTLN(F("CAL OK"));
+    } else {
+        DEBUG_PRINTLN(F("CAL ERR"));
     }
     return success;
 }
